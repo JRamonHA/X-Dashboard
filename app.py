@@ -39,6 +39,12 @@ app_ui = ui.page_sidebar(
             multiple=True,
             selected=["1"]
         ),
+        ui.input_date_range(
+            "daterange", 
+            "Fecha:",
+            start=consumo.index.min(), 
+            end=consumo.index.max()
+        ),
         open="desktop",
     ),
     ui.layout_columns(
@@ -58,8 +64,16 @@ app_ui = ui.page_sidebar(
 
 def server(input, output, session):
     @reactive.calc
+    def date_filter() -> pd.DataFrame:
+        start_date, end_date = input.daterange()
+        start_date = pd.to_datetime(start_date)
+        end_date = pd.to_datetime(end_date)
+        return consumo.loc[(consumo.index >= start_date) & (consumo.index <= end_date)]
+    
+    @reactive.calc
     def consumo_data():
-        data = consumo.copy()
+        # Comienza filtrando por fecha
+        data = date_filter().copy()
 
         # Filtrar por los puntos de carga seleccionados
         pcs_seleccionados = input.puntos_carga()
